@@ -13,6 +13,16 @@
     - [ ] Know the Concepts
     - [ ] Use the Concepts
     - [ ] Going Further
+- [ ] Chapter 3. Your First Program
+  - [ ] Entering in the Program
+  - [ ] Outline of Assembly Language Program
+  - [ ] Planning the Program
+  - [ ] Finding a Maximum Value
+  - [ ] Addressing Modes
+  - [ ] Review
+    - [ ] Know the Concepts
+    - [ ] Use the Concepts
+    - [ ] Going Further
 
 # Chapter 1. Introduction
 
@@ -28,7 +38,7 @@
 
 保持忍耐力！
 
-### Your Tools
+## Your Tools
 
 学习时使用的环境：
 
@@ -37,7 +47,7 @@
 
 # Chapter 2. Computer Architecture
 
-### Structure of Computer Memory
+## Structure of Computer Memory
 
 内存由若干个内存单元组成，每个内存单位的空间大小是 1 字节。每个内存单元都有一个编号，也即地址。如下图所示：
 
@@ -45,7 +55,7 @@
 
 指令和数据都存储在内存单元。
 
-### The CPU
+## The CPU
 
 CPU 的组成：
 
@@ -65,11 +75,11 @@ fetch-execute cycle:
 - 执行被执行
 - 把结果经过 data bus 送入内存
 
-### Some Terms
+## Some Terms
 
 无
 
-### Interpreting Memory
+## Interpreting Memory
 
 在内存存储客户信息的例子。有两种内存布局：
 
@@ -89,11 +99,11 @@ fetch-execute cycle:
 
 优点：字段的长度可以变化，不用固定死。根据指针，就可以方便的找到每个字段。
 
-### Data Accessing Methods
+## Data Accessing Methods
 
 CPU 读取数据的方式，即寻址模式。
 
-#### immediate mode(直接模式)
+### immediate mode(直接模式)
 
 数据就在指令中，如：
 
@@ -135,7 +145,79 @@ base pointer address mode(基址寻址模式)
 
 上面第二种布局，如果使用间接寻址，寄存器里存 start of record ，offset = 8 ，start of record + 8 就得到 customer's age 指针的地址。
 
-### Review
+## Review
+
+# Chapter 3.Your First Program
+
+## Entering in the Program
+
+第一个例子
+
+编写源码：
+
+```assembly
+#exit.s
+#PURPOSE: 	Simple program that exits and returns a
+#			status code back to the linux kernel
+#
+
+#INPUT:		none
+#
+
+#OUTPUT:	returns a status code. This can be viewed
+# 			by typing
+#
+#			echo $?
+#
+#			after running the program
+#
+
+#VARIABLES:
+# 			%eax holds the system call number
+# 			%ebx holds the return status
+#
+.section .data
+
+.section .text
+.global _start
+_start:
+ mov $1, %eax	# this is the linux kernel command
+ 				# number (system call) for exiting
+ 				# a program
+ movl $0, %ebx	# this is the status number we will
+ 				# return to the operating system.
+ 				# Change this around and it will
+ 				# return different things to
+ 				# echo $?
+ int $0x80		# this wakes up the kernel to run
+ 				# the exit command
+```
+
+编译：将源文件编译程目标文件，也即机器指令文件：
+
+```sh
+as exit.s -o exit.o
+```
+
+链接：将多个目标文件链接成一个完整文件，并添加额外信息，保证其执行：
+
+```sh
+ld exit.o -o exit
+```
+
+执行：
+
+```sh
+./exit
+```
+
+该程序不会有任何输出，仅仅是开始执行，然后立即就退出程序。
+
+程序退出时，会给内核传递一个 exit status code ，默认是 0 。我们可以使用下面的指令查看这个 exit status code ：
+
+```sh
+echo $?
+```
 
 # 参考
 
