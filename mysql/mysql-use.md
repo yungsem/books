@@ -187,7 +187,9 @@ SHOW CREATE VIEW 视图名;
 DROP VIEW 视图名;
 ```
 
-## 查询语句
+# 查询
+
+## 概述
 
 ### 语法
 
@@ -203,6 +205,40 @@ LIMIT offset, row_count
 ;
 ```
 
+### 执行顺序
+
+- FROM：对 left_table 和 right_table_1 执行笛卡尔积，生成虚拟表 VT1 。
+
+- ON：对 VT1 应用 ON 筛选器。只有那些使 join_condition 为 true 的行才被插入 VT2 。
+
+- JOIN：
+  - 如果是 INNER JOIN ，则直接使用 VT2 作为 VT3 。
+  - 如果是 LEFT JOIN ，将 left_table 里未匹配到的行作为外部行添加到 VT2 ，生成 VT3 。
+  - 如果是 RIGHT JOIN ，将 right_table_1 里未匹配到的行作为外部行添加到 VT2 ，生成 VT3 。
+  - 如果还有其他 JOIN 子句，则将上述 VT3 作为 left_table 和 right_table_2 重复步骤 1-3 ，生成新的 VT3 。
+
+- WHERE：对 VT3 应用 WHERE 筛选器。只有使 where_condition 为 true 的行才被插入 VT4 。
+
+- GROUP BY：按 GROUP BY 子句中的 group_by_list 对 VT4 中的行进行分组，生成 VT5 。
+
+- HAVING：对 VT5 应用 HAVING 筛选器。只有使 having_condition 为 true 的组才会被插入 VT6 。注意 HAVING 子句里可以使用 select_list 里的别名。
+
+- SELECT：处理 SELECT 列表，产生 VT7 。
+
+- DISTINCT：将重复的行从 VT8 中移除，产生 VT8 。
+
+- ORDER BY：将 VT8 中的行按 ORDER BY 子句中的 order_by_list 排序，生成 VT9 。
+
+- LIMIT：从 VT9 中按 offset, row_count 将相应的行返回。
+
+## 简单查询
+
+## 查询条件
+
+## 表达式和函数
+
+## 连接查询
+
 ### JOIN 类型
 
 MySQL 支持四种类型的 JOIN :
@@ -213,22 +249,11 @@ MySQL 支持四种类型的 JOIN :
   - left outer join (left join)
   - right outer join (right join)
 
-### 执行顺序
+## 子查询
 
-1. FROM：对 left_table 和 right_table_1 执行笛卡尔积，生成虚拟表 VT1 。
-2. ON：对 VT1 应用 ON 筛选器。只有那些使 join_condition 为 true 的行才被插入 VT2 。
-3. JOIN：
-   - 如果是 INNER JOIN ，则直接使用 VT2 作为 VT3 。
-   - 如果是 LEFT JOIN ，将 left_table 里未匹配到的行作为外部行添加到 VT2 ，生成 VT3 。
-   - 如果是 RIGHT JOIN ，将 right_table_1 里未匹配到的行作为外部行添加到 VT2 ，生成 VT3 。
-   - 如果还有其他 JOIN 子句，则将上述 VT3 作为 left_table 和 right_table_2 重复步骤 1-3 ，生成新的 VT3 。
-4. WHERE：对 VT3 应用 WHERE 筛选器。只有使 where_condition 为 true 的行才被插入 VT4 。
-5. GROUP BY：按 GROUP BY 子句中的 group_by_list 对 VT4 中的行进行分组，生成 VT5 。
-6. HAVING：对 VT5 应用 HAVING 筛选器。只有使 having_condition 为 true 的组才会被插入 VT6 。注意 HAVING 子句里可以使用 select_list 里的别名。
-7. SELECT：处理 SELECT 列表，产生 VT7 。
-8. DISTINCT：将重复的行从 VT8 中移除，产生 VT8 。
-9. ORDER BY：将 VT8 中的行按 ORDER BY 子句中的 order_by_list 排序，生成 VT9 。
-10. LIMIT：从 VT9 中按 offset, row_count 将相应的行返回。
+## 分组查询
+
+## 组合查询
 
 # 数据类型
 
