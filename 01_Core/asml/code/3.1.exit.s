@@ -1,17 +1,15 @@
-#exit.s
-#PURPOSE: 	Simple program that exits and returns a
-#			status code back to the linux kernel
+# exit.s
+# PURPOSE: Simple program that exits and returns a status code back to the linux kernel
 #
-
 #INPUT:		none
 #
 
 #OUTPUT:	returns a status code. This can be viewed
-# 			by typing
+# 			  by typing
 #
-#			echo $?
+#			    echo $?
 #
-#			after running the program
+#			    after running the program
 #
 
 #VARIABLES:
@@ -23,7 +21,7 @@
 .section .text
 .global _start
 _start:
- mov $1, %eax	# this is the linux kernel command
+ movl $1, %eax	# this is the linux kernel command
  				# number (system call) for exiting
  				# a program
  movl $0, %ebx	# this is the status number we will
