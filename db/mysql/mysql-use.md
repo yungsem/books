@@ -731,3 +731,61 @@ mysqld --default-storage-engine=MyISAM
 ```
 
 则 mysqld 启动后默认的存储引擎是 MyISAM 。
+
+## 忘记密码
+
+编辑 MySQL 的配置文件 my.cnf ，在 [mysqld] 模块加入如下配置：
+
+```
+[mysqld]
+skip-grant-tables
+```
+
+重启 MySQL 服务：
+
+```sh
+systemctl restart mysqld
+```
+
+无密码进入 MySQL 命令行：
+
+```
+mysql
+
+mysql> 
+```
+
+切换数据库：
+
+```mysql
+use mysql;
+```
+
+查看 user 表：
+
+```mysql
+mysql> select Host, User from user;
++-----------+---------------+
+| Host      | User          |
++-----------+---------------+
+| %         | root          |
+| localhost | mysql.session |
+| localhost | mysql.sys     |
++-----------+---------------+
+3 rows in set (0.00 sec)
+```
+
+更改 root 用户的密码：
+
+```mysql
+update user set authentication_string=password('root') where User='root' and Host='%';
+```
+
+刷新权限：
+
+```mysql
+flush privileges;
+```
+
+还原 my.cnf 中的配置，删除配置项 `skip-grant-tables` 。重启 MySQL 服务。
+

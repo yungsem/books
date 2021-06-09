@@ -551,9 +551,300 @@ Kcptun 服务端会随 Supervisor 的启动而启动
 
 # 用户管理
 
+## 相关文件
+
+### 概览
+
+| 名称           | 文件路径                 |
+| -------------- | ------------------------ |
+| 用户信息       | /etc/passwd              |
+| 影子文件       | /etc/shadow              |
+| 组信息         | /etc/group               |
+| 组密码文件     | /etc/gshadow             |
+| 用户 home 目录 | /home/username           |
+| 用户邮箱       | /var/spool/mail/username |
+
+### /etc/passwd
+
+```sh
+cat /etc/passwd
+
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologi
+```
+
+/etc/passwd 文件的内容每一行代表一个用户，中间用冒号分隔，一行共分成 7 列，每一列的含义如下：
+
+第 1 列：用户名
+
+第 2 列：密码（不会明文显示，用 x 代替）
+
+第 3 列：用户 ID
+
+- 0 ：表示管理员用户。
+
+- 1~499 ：表示系统用户。操作系统用来运行系统服务的，不能登录。
+
+- 500~60000 ：表示普通用户。
+
+第 4 列：组 ID
+
+第 5 列：用户说明
+
+第 6 列：用户 home 目录
+
+第 7 列：登录 shell
+
+### /etc/shadow
+
+```sh
+cat /etc/shadow
+
+root:$6$6F/97Dd75kORi821$V5lGbtzWdMWdUQ9h9oq2PxeRxd8U0mP4dbrYLhgjUdLlGD0uyu57sfBejj.vFVtMA8eegsMt2mckS2WEZJQlZ/::0:99999:7:::
+bin:*:17834:0:99999:7:::
+```
+
+第 1 列：用户名
+
+第 2 列：加密后的密码。如果这一列为 `!!` 或 `*` ，代表该用户没有密码，无法登录。
+
+第 3 列：密码最近修改时间
+
+第 4 列：两次修改密码的间隔时间
+
+第 5 列：密码有效期
+
+第 6 列：密码到期前的警告天数
+
+第 7 列：密码过期后的宽限天数
+
+第 8 列：密码失效时间
+
+第 9 列：保留
+
+### /etc/group
+
+```sh
+cat /etc/group
+
+root:x:0:
+bin:x:1:
+```
+
+第 1 列：组名
+
+第 2 列：组密码
+
+第 3 列：GID（组 ID）
+
+第 4 列：附加组是改组的用户
+
+
+
+初始组：每个用户都有且只有一个初始组。
+
+附加组：每个用户可以有多个附加组。
+
+## 用户相关命令
+
+### 添加用户
+
+```sh
+useradd 用户名
+```
+
+示例：
+
+```sh
+useradd yangsen
+```
+
+查看相关文件：
+
+```sh
+cat /etc/passwd
+yangsen:x:1002:1002::/home/yangsen:/bin/bash
+
+cat /etc/shadow
+yangsen:!!:18787:0:99999:7:::
+
+cat /etc/group
+yangsen:x:1002:
+
+cat /etc/gshadow
+yangsen:!::
+
+ll /var/spool/mail/
+yangsen
+
+ll /home
+drwx------. 2 yangsen  yangsen  62 6月   9 20:10 yangsen
+```
+
+### 设置密码
+
+```sh
+passwd 用户名
+```
+
+### 修改用户信息
+
+```sh
+usermod 用户名
+```
+
+### 删除用户
+
+```sh
+userdel 选项 用户名
+
+选项：
+-r 删除用户的同时删除用户的 home 目录
+```
+
+### 切换用户
+
+```sh
+su 选项 用户名
+
+选项：
+- 切换用户时，连带用户的环境变量一起切换，不可省略
+```
+
+## 组相关命令
+
+### 添加组
+
+```sh
+groupadd 组名
+```
+
+### 删除组
+
+```sh
+groupdel 组名
+```
+
+### 把用户添加进组
+
+```sh
+gpasswd -a 用户名 组名
+```
+
+### 从组中删除用户
+
+```sh
+gpasswd -d 用户名 组名
+```
+
+### 改变当前用户的初始组
+
+```sh
+newgrp 组名
+```
+
 # 权限管理
 
 # 文件系统管理
+
+## scp
+
+命令格式：
+```
+scp 源主机用户名@源主机IP:源文件 目标主机用户名@目标主机IP:目标目录 
+```
+
+复制本机文件到目标服务器：
+```
+scp 源文件 目标主机用户名@目标主机IP:目标目录 
+```
+
+复制目标服务器文件到本机：
+```
+scp 源主机用户名@源主机IP:源文件 目标目录
+```
+
+## 批量重命名文件
+
+### rename 命令
+可以使用 rename 命令来批量重命名文件。命令格式：
+```
+rename from to file
+```
+- from: 原来的文件名
+- to: 修改后的文件名
+- file: 要修改的文件
+
+### 示例
+#### 示例一
+有一批文件，都是以 log 开头的：log001.txt ，log002.txt ，.... 一直到 log100.txt 。现在想要把这批文件的 log 全部替换为 history ：
+```
+rename log history log*
+```
+
+#### 示例二
+将所有 jpeg 的后缀名图片文件修改为 jpg 文件：
+```
+rename .jpeg .jpg *.jpeg
+```
+
+## lrzsz
+
+### lrzsz 是什么
+lrzsz 是一个文件传输工具。我们使用它，可以将本地文件上传到服务器，也可以将服务器的文件下载到本地。
+
+### 安装 lrzsz
+在 CentOS 上可以直接使用 yum 安装：
+```
+yum -y install lrzsz 
+```
+
+### 使用
+上传本地文件到服务器：
+```
+rz
+```
+
+下载服务器文件到本地：
+```
+sz 源文件
+```
+
+## 解压缩
+
+### .zip 格式
+
+压缩目录：
+```
+zip -r 压缩包名 源目录
+```
+
+解压到当前目录：
+```
+unzip 压缩包名
+```
+
+### .tar.gz 格式
+压缩目录：
+```
+tar -zcvf 压缩包名 源目录
+```
+
+解压当当前目录：
+```
+tar -zxvf 压缩包名
+```
+
+### .tar.bz2 格式
+压缩目录：
+```
+tar -jcvf 压缩包名 源目录
+```
+
+解压当当前目录：
+```
+tar -jxvf 压缩包名
+```
 
 # 服务管理
 

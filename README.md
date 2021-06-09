@@ -20,9 +20,10 @@
   - sqlserver
   - oracle
 
-- MQ
+- Mid
   - rabbitmq
-
+  - mycat
+  
 - Java
 
 - Go
@@ -50,9 +51,10 @@
   - sqlserver
   - oracle
 
-- MQ
+- Mid
   - rabbitmq
-
+  - mycat
+  
 - Java
 
 - Go
