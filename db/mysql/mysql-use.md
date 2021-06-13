@@ -546,11 +546,11 @@ docker run --name=mysql80 \
 -d mysql/mysql-server:tag
 ```
 ```
-docker run --name=mysql80 \
+docker run --name=mysql5 \
 -p 3306:3306 \
 --mount type=bind,src=/etc/my.cnf,dst=/etc/my.cnf \
 --mount type=bind,src=/var/lib/mysql,dst=/var/lib/mysql \
--d mysql/mysql-server:latest
+-d mysql/mysql-server:5.7
 ```
 
 容器启动之前，宿主主机的 /etc/my.cnf 文件和 /var/lib/mysql 必须存在，并且 /etc/my.cnf 文件必须以以下内容开头：
