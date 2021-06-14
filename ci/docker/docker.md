@@ -969,3 +969,6 @@ options:
 
 # Potainer
 
+# Docker Swarm
+
+# K8S
