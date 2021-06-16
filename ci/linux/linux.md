@@ -1161,7 +1161,7 @@ tcp    LISTEN     0      80        *:3306                  *:*                  
 **开放指定端口**
 
 ```
-sudo firewall-cmd --zone=public --add-port=3306/tcp --permanent
+sudo firewall-cmd --zone=public --add-port=9/tcp --permanent
 sudo firewall-cmd --reload
 ```
 

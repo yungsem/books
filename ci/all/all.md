@@ -301,5 +301,59 @@ docker-compose up -d
 
 # Drone
 
+## 安装(Gitea)
+
+### 创建 OAuth2 应用
+
+在 gitea 中创建 OAuth2 应用：
+
+![image-20210615215344692](img/image-20210615215344692.png)
+
+生成的 Client ID 和 Client Secret 在 drone 的 docker-compose.yml 文件中使用。
+
+### 创建共享 secret
+
+用 openssl 创建一个共享的 secret ，供 drone server 和 drone runner 使用：
+
+```sh
+openssl rand -hex 16
+
+0dd984415ee07bbbe718e3fe522887b8
+```
+
+生成的 secret 在 drone 和 drone runner 的 docker-compose.yml 文件中使用。
+
+### 运行 drone 服务
+
+使用 docker-compose 运行 drone 服务端程序，docker-compose.yml 文件见 [这里](https://github.com/yungsem/docker-compose-file/blob/main/drone/docker-compose.yml) 。
+
+运行成功之后，在浏览器打开 http://192.168.31.192:4000 ，会自动跳到 gitea 授权页面要求授权，如下所示：
+
+![image-20210615215633049](img/image-20210615215633049.png)
+
+点击 `应用授权` ，进入 drone 管理页面，会自动把 gitea 的仓库同步过来，如下所示：
+
+![image-20210615215715107](img/image-20210615215715107.png)
+
+### 运行 drone docker runner
+
+使用 docker-compose 运行 drone-docker-runner 程序，docker-compose.yml 文件见 [这里](https://github.com/yungsem/docker-compose-file/blob/main/drone-docker-runner/docker-compose.yml) 。
+
+## 示例
+
+示例项目见 [这里](https://github.com/yungsem/spring-boot-drone) 。
+
+重点关注 [.drone.yml](https://github.com/yungsem/spring-boot-drone/blob/main/.drone.yml) 文件 和 [run.sh](https://github.com/yungsem/spring-boot-drone/blob/main/run.sh) 文件。
+
+## 自己构建企业版 Drone
+
+Dockerfile 见 [这里]() 。
+
+## 参考
+
+https://docs.drone.io/server/provider/gitea/
+
+https://docs.drone.io/runner/docker/installation/linux/
+
 # Nginx
 
