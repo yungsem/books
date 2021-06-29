@@ -58,6 +58,11 @@ CPU 的本质能力在于执行指令，CPU 支持的指令就称为 CPU 指令�
 - Complex Instruction Set Computing (CISC) 复杂指令集，Intel 的 x86_64 CPU 使用
 - Reduced Instruction Set Computing (RISC) 精简指令集，手机端的芯片使用
 
+汇编指令和指令集的关系
+一条汇编指令对应一条 CPU 指令
+一条汇编指令也可能对应多条 CPU 指令
+有的 CPU 指令没有汇编指令与其对应
+
 ## 汇编语言
 
 ### 汇编语言格式
