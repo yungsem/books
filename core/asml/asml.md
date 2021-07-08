@@ -49,81 +49,6 @@ CPU 的本质能力在于执行指令，CPU 支持的指令就称为 CPU 指令�
 - Complex Instruction Set Computing (CISC) 复杂指令集，Intel 的 x86_64 CPU 使用
 - Reduced Instruction Set Computing (RISC) 精简指令集，手机端的芯片使用
 
-# 起步
-
-## 系统调用 sys_exit
-
-### 说明
-
-**系统调用过程简述**：
-
-- 要想触发系统调用，先需要发送 `int $0x80` 中断。
-- 然后内核读取 `%eax` 里的功能码，找到对应的系统调用执行。其中参数从 `%ebx` , `%ecx` , `%edx` , `%esi` 中读取。
-- 系统调用的返回值可以通过 `echo $?` 打印出来。
-
-具体参考 [这里](https://introspelliam.github.io/2017/08/07/int-80h%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E6%96%B9%E6%B3%95/) 。
-
-在本例中，我们将调用一个系统调用 `sys_exit` ，该系统调用的定义如下：
-
-```
-1. sys_exit
-
-Syntax: int sys_exit(int status)
-Source: kernel/exit.c
-Action: terminate the current process
-Details: status is return code
-```
-
-由定义可知，该系统调用的功能码是 1 ，需要一个 status 参数，并且该参数会作为返回值返回。
-
-### 示例
-
-源码：
-
-```assembly
-# exit.s
-
-.section .data # 定义数据段，本例中没有数据，所以下方没有内容
-
-.section .text # 定义代码段
-.global _start # 定义一个 symbol ，名为 _start 。symbol 的值是下面 label 对应的地址，后续可以使用 symbol d
-_start:        # label ，label 对应的地址就是 symbol 的值
- movl $1, %eax  # sys_exit 系统调用的功能码是 1 ,功能码必须存入 eax 中
- movl $0, %ebx  # 传递给 sys_exit 的参数，此处使用 0 。该参数的值作为 sys_exit 的返回值返回。 
-                # 返回值可以使用 echo $? 打印出来
- int $0x80      # 触发中断，唤起系统调用
-```
-
-编译：
-
-```sh
-as exit.s -o exit.o
-```
-
-链接：
-
-```sh
-ld exit.o -o exit
-```
-
-执行：
-
-```sh
-./exit
-```
-
-打印系统调用的返回值：
-
-```sh
-echo $?
-```
-
-## 寻找最大值
-
-说明：
-
-本例将实现需求：在一组数字中找出最大值。
-
 # 语法
 
 ## 程序结构
@@ -134,7 +59,7 @@ echo $?
 .section .data # 数据段
 .section .text # 代码段
 .global _start # 全局标号
-_start: # 起始标号
+_start: # 标号
 ... # 代码
 ```
 
@@ -265,10 +190,6 @@ movl (ADDRESS), %eax
 
 > 注意：偏移量从 0 开始。
 
-如：基址 2002 ，倍数 4 ，读取从 2002 开始的第四个字（一个字占 4 个字节）：
-
-2002,3
-
 ```assembly
 movl string_start(,%ecx,1), %eax
 ```
@@ -285,13 +206,15 @@ movl (%eax), %ebx
 
 在 indirect addressing mode 基础上加一个 offset ，真正地址是：
 
+```sh
 寄存器中的地址 + offset
+```
 
 ```assembly
 movl 4(%eax), %ebx
 ```
 
-汇编代码层面
+### 总结
 
 ```assembly
 ADDRESS_OR_OFFSET(%BASE_OR_OFFSET,%INDEX,MULTIPLIER)
@@ -301,5 +224,200 @@ ADDRESS_OR_OFFSET(%BASE_OR_OFFSET,%INDEX,MULTIPLIER)
 FINAL ADDRESS = ADDRESS_OR_OFFSET + %BASE_OR_OFFSET + MULTIPLIER * %INDE
 ```
 
+## 指令
 
+### 跳转指令
+
+```assembly
+# Jump if the values were equal
+je
+
+# Jump if the second value was greater than the first value
+jg
+
+# Jump if the second value was greater than or equal to the first value
+jge
+
+# Jump if the second value was less than the first value
+jl
+
+# Jump if the second value was less than or equal to the first value
+jle
+
+#Jump no matter what. This does not need to be preceeded by a comparison
+jmp
+```
+
+### 比较指令
+
+```assembly
+# 比较两个操作数是否相等。比较结果会写入 eflags 寄存器中。
+# 跳转指令（如：je）会从 eflags 寄存器中读取比较的结果，然后跳转。
+cmpl op1, op2
+```
+
+### 递增指令
+
+```assembly
+# 将 edi 中的值增加 1
+incl %edi
+```
+
+## 函数
+
+### 概述
+
+**函数的构成：**
+
+- function name：函数名引用函数代码内存的首地址。
+- function parameters
+- local variables
+- static variables：本次函数执行完，静态变量不丢弃，下次函数再执行时，继续使用该值。静态变量只为当前函数所拥有，其他函数不能共享。
+- global variables
+- return address： 返回地址是一个特殊的参数，在汇编语言中，call 指令负责将返回地址传递给被调用函数，ret 指令将程序跳转到返回地址指定的位置开始执行。
+- return value
+
+**调用协议(Calling Convention)：**
+
+本汇编语言使用 C 语言的调用协议，该调用协议被广泛使用，并且是 Linux 平台的标准调用协议。
+
+### C语言调用协议
+
+假设有如下函数调用：
+
+```c
+void foo() {
+    bar(3,2);
+}
+
+void bar(int a, int b) {
+    int c = 5;
+    int d = 4;
+    return a + b + c + d;
+}
+```
+
+则函数栈的结构如下：
+
+压入局部变量之前：
+
+![asml-2.6.2-1](img/asml-2.6.2-1.svg)
+
+压入局部变量之后：
+
+![asml-2.6.2-2](img/asml-2.6.2-2.svg)
+
+# 案例
+
+## 系统调用 sys_exit
+
+### 说明
+
+在本例中，我们将调用系 `sys_exit` 统调用。
+
+**系统调用过程简述**：
+
+- 要想触发系统调用，先需要发送 `int $0x80` 中断。
+- 然后内核读取 `%eax` 里的功能码，找到对应的系统调用执行。其中参数从 `%ebx` , `%ecx` , `%edx` , `%esi` 中读取。
+- 系统调用的返回值可以通过 `echo $?` 打印出来。
+
+具体参考 [这里](https://introspelliam.github.io/2017/08/07/int-80h%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E6%96%B9%E6%B3%95/) 。
+
+`sys_exit` 系统调用的定义如下：
+
+```
+1. sys_exit
+
+Syntax: int sys_exit(int status)
+Source: kernel/exit.c
+Action: terminate the current process
+Details: status is return code
+```
+
+由定义可知，该系统调用的功能码是 1 ，需要一个 status 参数，并且该参数会作为返回值返回。
+
+### 源码
+
+```assembly
+# exit.s
+
+.section .data # 定义数据段，本例中没有数据，所以下方没有内容
+
+.section .text # 定义代码段
+.global _start # 定义一个 symbol ，名为 _start 。symbol 的值是下面 label 对应的地址，后续可以使用 symbol d
+_start:        # label ，label 对应的地址就是 symbol 的值
+ movl $1, %eax  # sys_exit 系统调用的功能码是 1 ,功能码必须存入 eax 中
+ movl $0, %ebx  # 传递给 sys_exit 的参数，此处使用 0 。该参数的值作为 sys_exit 的返回值返回。 
+                # 返回值可以使用 echo $? 打印出来
+ int $0x80      # 触发中断，唤起系统调用
+```
+
+```sh
+as exit.s -o exit.o
+```
+
+```sh
+ld exit.o -o exit
+```
+
+```sh
+./exit
+```
+
+打印系统调用的返回值：
+
+```sh
+echo $?
+```
+
+## 寻找最大值
+
+### 说明
+
+本例将实现需求：在一组数字中找出最大值。
+
+约定：如果遇到 0 ，则表示结束。
+
+![asml-3.2-1](img/asml-3.2-1-1625489917179.svg)
+
+### 源码
+
+```assembly
+# max.s
+
+.section .data # 数据段
+data_items: # 标号，下面的代码使用 data_items 引用数据段的起始地址
+  # 定义数据，都是 long 类型的数值，每个占 4 字节
+ .long 3, 67, 34, 222, 45, 75, 54, 34, 44, 33, 22, 11, 66, 0
+
+.section .text
+
+.global _start
+_start:
+ movl $0, %edi
+ movl data_items(,%edi,4), %eax
+ movl %eax, %ebx
+
+start_loop:
+ cmpl $0, %eax
+ je loop_exit
+ incl %edi
+ movl data_items(,%edi,4), %eax
+ cmpl %ebx, %eax
+ jle start_loop
+ movl %eax, %ebx
+ jmp start_loop
+loop_exit:
+ movl $1, %eax
+ int $0x80
+```
+
+```assembly
+as max.s -o max.o
+ld max.o -o max
+./max
+echo $?
+
+222
+```
 

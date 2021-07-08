@@ -972,3 +972,6 @@ options:
 # Docker Swarm
 
 # K8S
+
+## 集群安装
+
