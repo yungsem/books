@@ -2,56 +2,55 @@
 
 ## 安装 Docker
 
-### 建立仓库
+安装依赖包：
 
-首次通过仓库安装 Docker 需要先建立 Docker 仓库。仓库一旦建立，就可以通过仓库直接安装 Docker 了，官方推荐使用该方式安装 Docker 。
-
-1. 安装依赖包
-- yum-utils 提供 yum-config-manager 工具集
-- device-mapper-persistent-data 包和 lvm2 是 devicemapper 存储驱动所需要的依赖
-
-```
-sudo yum install -y yum-utils \
+```sh
+yum install -y yum-utils \
   device-mapper-persistent-data \
   lvm2
 ```
 
-2. 建立稳定版仓库
-依赖包安装成功之后，我们就可以建立仓库了，执行下面的命令：
-```
-sudo yum-config-manager \
+建立仓库：
+
+```sh
+yum-config-manager \
     --add-repo \
-    https://download.docker.com/linux/centos/docker-ce.repo
+    http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
 ```
 
-3. （可选）启用 nightly 仓库和 test 仓库
-```
-sudo yum-config-manager --enable docker-ce-nightly
+安装：
 
-sudo yum-config-manager --enable docker-ce-test
-```
-
-这两个仓库不是必装的，如果想要停用这两个仓库，执行下面的命令：
-```
-sudo yum-config-manager --disable docker-ce-nightly
-
-sudo yum-config-manager --disable docker-ce-test
+```sh
+yum -y install docker-ce
 ```
 
-### 安装
-1. 安装
-执行下面的命令安装最新版的 Docker
-```
-sudo yum -y install docker-ce docker-ce-cli containerd.io
+安装完重启。然后启动 Docker ：
+
+```sh
+systemctl start docker
+systemctl enable docker
 ```
 
-2. 运行 Docker
-安装成功之后，就可以开时运行 Docker 了：
-```
-sudo systemctl start docker
+配置 Docker ：
+
+```sh
+cat > /etc/docker/daemon.json <<EOF
+{
+    "exec-opts": ["native.cgroupdriver=systemd"],
+    "log-driver": "json-file",
+    "log-opts": {
+    	"max-size": "100m"
+    }
+}
+EOF
+
+mkdir -p /etc/systemd/system/docker.service.d
+
+systemctl daemon-reload && systemctl restart docker && systemctl enable docker
 ```
 
-3. 验证 Docker 是否安装成功
+验证 Docker 是否安装成功：
+
 ```
 sudo docker run hello-world
 ```
@@ -79,24 +78,8 @@ For more examples and ideas, visit:
  https://docs.docker.com/get-started/
 ```
 
-### 启停
-我们的 Docker 是使用 yum 安装的， yum 安装的软件都会受 systemctl 管理，所以可以使用标准的 systemctl 命令管理 Docker 的启停。
+参考：
 
-```
-# 启动
-systemctl start docker
-
-# 停用
-systemctl stop docker
-
-# 重启
-systemctl restart docker
-
-# 设置为开机自启
-systemctl enable docker
-```
-
-### 参考
 [Get Docker Engine - Community for CentOS](https://docs.docker.com/install/linux/docker-ce/centos/)
 ## Dockerfile 命令
 
@@ -967,11 +950,116 @@ options:
 - -t Show timestamps.
 - --tail="all" Number of lines to show from the end of the logs for each container.
 
-# Potainer
-
 # Docker Swarm
 
-# K8S
+# Habor
 
-## 集群安装
+## 安装 Habor
+
+下载离线安装包。下载地址 https://github.com/goharbor/harbor/releases 。
+
+解压：
+
+```sh
+tar -xvzf harbor-offline-installer-v2.3.1.tgz
+```
+
+移动：
+
+```sh
+mv harbor /usr/local/
+```
+
+修改 harbor.yml.tmpl 文件：
+
+```sh
+vim harbor.yml.tmpl
+```
+
+要修改的内容：
+
+```sh
+hostname: hub.yungsem.cn
+database:
+  password: root
+https:
+  port: 443
+  certificate: /data/cert/server.crt
+  private_key: /data/cert/server.key
+```
+
+创建目录：
+
+```sh
+mkdir -p /data/cert
+```
+
+进入：
+
+```sh
+cd /data/cert
+```
+
+创建 https 证书：
+
+```sh
+openssl genrsa -des3 -out server.key 2048
+openssl req -new -key server.key -out server.csr
+cp server.key server.key.org
+openssl rsa -in server.key.org -out server.key
+openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
+chmod a+x *
+```
+
+回到 /usr/local/harbor 目录，执行安装脚本：
+
+```sh
+./install.sh
+```
+
+向 hosts 文件中添加域名：
+
+```sh
+echo "192.168.31.163 hub.yungsem.cn" >>/etc/hosts
+```
+
+Windows 的 hosts 文件中也添加：
+
+```sh
+192.168.31.163 hub.yungsem.cn
+```
+
+浏览器访问：hub.yungsem.cn
+
+默认用户名密码：
+
+```sh
+admin
+Harbor12345
+```
+
+修改配置文件后重启：
+
+```sh
+docker-compose down
+./prepare
+docker-compose up -d
+```
+
+修改 Docker 配置文件：
+
+```sh
+cat /etc/docker/daemon.json 
+
+{
+    "exec-opts": ["native.cgroupdriver=systemd"],
+    "log-driver": "json-file",
+    "log-opts": {
+    "max-size": "100m"
+    },
+    "insecure-registries": ["https://hub.yungsem.cn"] #加这一行
+}
+```
+
+
 
