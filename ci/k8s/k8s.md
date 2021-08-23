@@ -764,6 +764,81 @@ kubectl describe pod kube-flannel-ds-krhvr -n kube-system
 kubectl run nginx01 --image=hub.yungsem.cn/library/myapp:v1 --port=80 
 ```
 
+# 对象
+
+## 概述
+
+### 什么是K8S对象
+
+Pod ，Deployment 等都是 K8S 对象。
+
+K8S 对象包含两方面信息：
+
+- spec: desired state
+- status: current state
+
+每一个 K8S 对象都有一个 name 和一个 ID ，同类型的 K8S 对象名称不能重复。
+
+### 创建K8S对象
+
+创建 K8S 对象需要通过 K8S API ，需要传递一个 json 格式的参数。可以使用 kubectl 创建 K8S 对象，kubectl 接收一个 yml 文件作为参数，它会把 yml 文件自动转换 json 然后调用 K8S API 。
+
+下面是一个 Deployment 对应 yml 文件的示例：
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+```
+
+yml 文件的必填字段：
+
+- apiVersion：K8S API 的版本
+- kind：K8S 对象的类型
+- metadata：K8S 对象的元数据（说明）
+- spec：K8S 对象 spec ，各个类型有各自要求的 spec
+
+### 管理K8S对象
+
+推荐使用 kubectl 。
+
+## namespace
+
+## pod
+
+spec 文件必须字段
 
 
-OCI runtime create failed: container_linux.go:380: starting container process caused: exec: "replicas=1": executable file not found in $PATH: unknown
+
+```sh
+kubectl apply -f testpod.yml
+
+kubectl create -f testpod.yml
+
+kubectl get pod
+
+kubectl get pod -o wide
+
+kubectl describe pod testpod
+
+kubectl logs testpod -c test
+
+kubectl delete pod testpod
+```
+
